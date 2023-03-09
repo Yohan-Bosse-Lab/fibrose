@@ -6,5 +6,5 @@
 ```
 #Run the function
 pwp_syn_nonsyn(snps_file = "input/SNPs.txt", exons_file = "input/Exons.txt",
-figure = 'output/SERPINA1-PWP_2023-03-06.png')
+figure = 'output/SERPINA1-PWP.png')
 ```
