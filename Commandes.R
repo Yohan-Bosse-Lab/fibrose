@@ -37,9 +37,11 @@ mtext("Chromosome 14 (kb)", 1, cex = 1.5, line = 4)
 ## Exons #darkgrey = non codant
 for(i in seq_along(exons$Exon.Start))
 {
-   #if(i ==1) rect(exons$Exon.End[i], 3, exons$Exon.Start[i], 0, col = "darkgrey", border = NA)
-   rect(exons$Exon.End[i], 3, exons$Exon.Start[i], 0, col = "black", border = NA)
+   if(exons$code[i] == 'non codant') rect(exons$Exon.End[i], 3, exons$Exon.Start[i], 0, col = "darkgrey", border = NA)
+   if(exons$code[i] == 'codant')     rect(exons$Exon.End[i], 3, exons$Exon.Start[i], 0, col = "black", border = NA)
 
+   #rect(exons$Exon.End[i], 3, exons$Exon.Start[i], 0, col = "black", border = NA)
+  
    spacer = 0 
    text((((exons$Exon.End[i]-exons$Exon.Start[i])/2)+exons$Exon.Start[i])+spacer, -0.3, exons$Exon.Name[i], cex = 1.5,xpd =T)
 }
@@ -57,9 +59,10 @@ dif = ((max(exons$Exon.Start) -  min(exons$Exon.End)) / nrow(snps)) #
 
 for (i in 1:nrow(snps.order))
 {
+  labels =  paste0(snps.order$SNP[i],ifelse(snps.order$Changement.AA[i] == ' ','','\n'),snps.order$Changement.AA[i],'\n',snps.order$N.Patients[i])
 	segments(snps.order$SNP.Position[i], 4, (max(exons$Exon.Start) - (i * dif)), 6, lwd =  2)
   segments(max(exons$Exon.Start) - (i * dif), 6, max(exons$Exon.Start) - (i * dif), 7,lwd= 2)
-	text(x = max(exons$Exon.Start) - (i * dif), y = 7.1, labels = snps.order$SNP[i], col = snps.order$SNP.Couleur[i], srt = 90, cex = 0.8, pos = 4,offset=0)
+	text(x = max(exons$Exon.Start) - (i * dif), y = 7.1, labels = labels, col = snps.order$SNP.Couleur[i], srt = 90, cex = 0.8, pos = 4,offset=0)
 	}
 
 dev.off()
