@@ -7,7 +7,7 @@
 
 
 #function 
-pwp_syn_nonsyn = function(snps_file = "input/SNPs.txt", exons_file = "input/Exons.txt" , figure = "SERPINA1-PWP.png") {
+pwp_syn_nonsyn = function(snps_file = "input/SNPs.txt", exons_file = "input/Exons.txt" , figure = "SERPINA1-PWP.png",title = 'this is a super plot') {
 
 
 snps <- read.table(snps_file, header = T, sep = "\t")
@@ -18,8 +18,8 @@ snps.order <- snps[order(snps$SNP.Position, decreasing = T) , ]
 figure_name = sub('.png',paste0('_',Sys.Date(),'.png'),figure)
 png(figure_name, height = 3840, width = 5120, pointsize = 75)
 
-par(mar = c(6,0,0,0))
-plot(x=0,y=0, xlim = c(max(exons$Exon.Start), min(exons$Exon.End)), ylim = c(0,15), xaxt = "n", yaxt = "n", xlab = "", ylab = "", main = "", cex.lab = 1.5)
+par(mar = c(6,1,3,1))
+plot(x=0,y=0, xlim = c(max(exons$Exon.Start), min(exons$Exon.End)), ylim = c(0,8), xaxt = "n", yaxt = "n", xlab = "", ylab = "", main = title, cex.lab = 1.5)
 
 box(col = "white", lwd = 10)
 
@@ -69,7 +69,7 @@ message(paste0('Done preparing figure ',figure,' --- Time is: ',Sys.time()))
 }
 
 #Run the function below...
-pwp_syn_nonsyn(snps_file = "C:/Users/renseb01/Desktop/SNPs_ABCA3.txt", exons_file = "C:/Users/renseb01//Desktop/Exons_ABCA3.txt",figure = 'test.png')
+pwp_syn_nonsyn(snps_file = "input/SNPs_SFTPA2.txt", exons_file = "input/Exons_SFTPA2.txt",figure = 'test.png',title = 'this is a super plot')
 
 
 
