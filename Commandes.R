@@ -41,7 +41,7 @@ for(i in seq_along(exons$Exon.Start))
    rect(exons$Exon.End[i], 3, exons$Exon.Start[i], 0, col = "black", border = NA)
 
    spacer = 0 
-   text((((exons$Exon.End[i]-exons$Exon.Start[i])/2)+exons$Exon.Start[i])+spacer, -0.3, exons$Exon.Name[i], cex = 1.5)
+   text((((exons$Exon.End[i]-exons$Exon.Start[i])/2)+exons$Exon.Start[i])+spacer, -0.3, exons$Exon.Name[i], cex = 1.5,xpd =T)
 }
 
 ## SNPs-Position sur ligne de base
