@@ -1,13 +1,13 @@
 #####################################
 ###  Version 2023-01-06
-#four required arguments to the function
-# "Exons.txt" Avoir la liste des exons avec les positions.
-# "SNPs.txt" Avoir la liste des SNPs avec leur position sur le B37/38.
-# figure  Le nom de la figure (et path)
-# title: titre (optionel)
+# four arguments are required to run the function
+# "Exons.txt" Fichier (et path) d'exons avec les positions.
+# "SNPs.txt" Fichier (et path) de SNPs avec leur position sur le B37/38.
+# figure  Le nom (et path) de la figure à produire
+# title: titre (optionnel) de la figure 
 
 
-#function 
+#function definition
 pwp_syn_nonsyn = function(snps_file = "input/SNPs.txt", exons_file = "input/Exons.txt" , figure = "SERPINA1-PWP.png",title = '') {
 
 
@@ -72,7 +72,7 @@ message(paste0('Done preparing figure ',figure,' --- Time is: ',Sys.time()))
 
 }
 
-#Run the function below...
+#Example:
 pwp_syn_nonsyn(snps_file = "sandbox/SNPs_ABCA3.txt", exons_file = "sandbox/Exons_ABCA3(003).txt",figure = 'test.png',title = 'this is a super plot')
 
 
