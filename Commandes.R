@@ -1,13 +1,14 @@
 #####################################
 ###  Version 2023-01-06
-#three required arguments to the function
+#four required arguments to the function
 # "Exons.txt" Avoir la liste des exons avec les positions.
 # "SNPs.txt" Avoir la liste des SNPs avec leur position sur le B37/38.
-# figure  Le nom de la figure
+# figure  Le nom de la figure (et path)
+# title: titre (optionel)
 
 
 #function 
-pwp_syn_nonsyn = function(snps_file = "input/SNPs.txt", exons_file = "input/Exons.txt" , figure = "SERPINA1-PWP.png",title = 'this is a super plot') {
+pwp_syn_nonsyn = function(snps_file = "input/SNPs.txt", exons_file = "input/Exons.txt" , figure = "SERPINA1-PWP.png",title = '') {
 
 
 snps <- read.table(snps_file, header = T, sep = "\t")
@@ -72,7 +73,7 @@ message(paste0('Done preparing figure ',figure,' --- Time is: ',Sys.time()))
 }
 
 #Run the function below...
-pwp_syn_nonsyn(snps_file = "input/SNPs_SFTPA2.txt", exons_file = "input/Exons_SFTPA2.txt",figure = 'test.png',title = 'this is a super plot')
+pwp_syn_nonsyn(snps_file = "sandbox/SNPs_ABCA3.txt", exons_file = "sandbox/Exons_ABCA3(003).txt",figure = 'test.png',title = 'this is a super plot')
 
 
 
