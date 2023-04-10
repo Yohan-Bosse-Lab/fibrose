@@ -38,8 +38,8 @@ mtext("Chromosome 14 (kb)", 1, cex = 1.5, line = 4)
 ## Exons #darkgrey = non codant
 for(i in seq_along(exons$Exon.Start))
 {
-   if(exons$code[i] == 'non codant') rect(exons$Exon.End[i], 3, exons$Exon.Start[i], 0, col = "darkgrey", border = NA)
-   if(exons$code[i] == 'codant')     rect(exons$Exon.End[i], 3, exons$Exon.Start[i], 0, col = "black", border = NA)
+   if(exons$code[i] == 'non codant') rect(exons$Exon.End[i], 2.5, exons$Exon.Start[i], 0.5, col = "darkgrey", border = NA)
+   if(exons$code[i] == 'codant')     rect(exons$Exon.End[i], 2.5, exons$Exon.Start[i], 0.5, col = "black", border = NA)
 
    #rect(exons$Exon.End[i], 3, exons$Exon.Start[i], 0, col = "black", border = NA)
   
@@ -50,7 +50,7 @@ for(i in seq_along(exons$Exon.Start))
 ## SNPs-Position sur ligne de base
 for (i in 1:nrow(snps.order))
 {
-	segments(snps.order$SNP.Position[i]-4, 2, snps.order$SNP.Position[i]+4, 4, col = "black",lwd =2 )
+	segments(snps.order$SNP.Position[i]-4, 2, snps.order$SNP.Position[i]+4, 3, col = "black",lwd =2 )
 }
 
 
@@ -60,10 +60,10 @@ dif = ((max(exons$Exon.Start) -  min(exons$Exon.End)) / nrow(snps)) #
 
 for (i in 1:nrow(snps.order))
 {
-  labels =  paste0(snps.order$SNP[i],ifelse(snps.order$Changement.AA[i] == ' ','','\n'),snps.order$Changement.AA[i],'\n',snps.order$N.Patients[i])
-	segments(snps.order$SNP.Position[i], 4, (max(exons$Exon.Start) - (i * dif)), 6, lwd =  2)
-  segments(max(exons$Exon.Start) - (i * dif), 6, max(exons$Exon.Start) - (i * dif), 7,lwd= 2)
-	text(x = max(exons$Exon.Start) - (i * dif), y = 7.1, labels = labels, col = snps.order$SNP.Couleur[i], srt = 90, cex = 0.8, pos = 4,offset=0)
+  labels =  paste0(snps.order$SNP[i],ifelse(snps.order$Changement.AA[i] == ' ','',', '),snps.order$Changement.AA[i],', ',snps.order$N.Patients[i])
+	segments(snps.order$SNP.Position[i], 3, (max(exons$Exon.Start) - (i * dif)), 4.5, lwd =  2)
+  segments(max(exons$Exon.Start) - (i * dif), 4.5, max(exons$Exon.Start) - (i * dif), 5,lwd= 2)
+	text(x = max(exons$Exon.Start) - (i * dif), y = 5.1, labels = labels, col = snps.order$SNP.Couleur[i], srt = 90, cex = 1.1, pos = 4,offset=0)
 	}
 
 dev.off()
@@ -73,7 +73,7 @@ message(paste0('Done preparing figure ',figure,' --- Time is: ',Sys.time()))
 }
 
 #Example:
-pwp_syn_nonsyn(snps_file = "sandbox/SNPs_ABCA3.txt", exons_file = "sandbox/Exons_ABCA3(003).txt",figure = 'test.png',title = 'this is a super plot')
+pwp_syn_nonsyn(snps_file = "sandbox/SNPs_SFTPA2.txt", exons_file = "sandbox/Exons_SFTPA2.txt",figure = 'test.png',title = 'this is a super plot')
 
 
 
