@@ -1,0 +1,134 @@
+---
+title: "fibrose_tables"
+author: "Sébastien Renaut (sebastien.renaut@criucpq.ulaval.ca)"
+date: "`r Sys.time()`"
+output:
+  html_document:
+    number_sections: T
+params:
+  datapath: 'C:/Users/renseb01/Documents/fibrose/data'
+  outputpath: 'C:/Users/renseb01/Documents/fibrose/results' 
+---
+
+```{r toto}
+x = 1:10
+print(x)
+
+plot(x)
+
+```
+
+
+
+```{r setup, include=FALSE}
+library(readxl)
+library(dplyr)
+knitr::opts_knit$set(root.dir = params$datapath)
+```
+
+## R Markdown
+  * toto
+
+```{r summary_stats}
+resume = read_xlsx(file.path(params$datapath,'Données_clinique_FPI_ng_13jul2023.xlsx'),sheet = 'Données cliniques 2023-10-17',skip =4)
+resume$`Positive family history of pulmonary fibrosis`[is.na(resume$`Positive family history of pulmonary fibrosis`)] = 'N'
+resume$`Supplementary oxygen`[is.na(resume$`Supplementary oxygen`)] = '0'
+resume$`Usual interstitial pneumonia`[is.na(resume$`Usual interstitial pneumonia`)] = 0
+resume$`Probable UIP`[is.na(resume$`Probable UIP`)] = 0
+resume$`Indeterminate UIP`[is.na(resume$`Indeterminate UIP`)] = 0
+resume$`Open lung`[is.na(resume$`Open lung`)] = 'Non'
+resume$Antifibrotic[is.na(resume$Antifibrotic)] = 0
+
+#all summary stats as a large tibble
+summary_stats = resume %>% group_by(Genotype) %>% summarise(
+                                            `Genotype counts` = length(Genotype),
+                                            Age_mean = mean(Age),
+                                            Age_sd = sd(Age),
+                                            Ethnicity = sum(Ethnie[Ethnie==1])/length(Ethnie),
+                                            `Positive family history of pulmonary fibrosis count` = length(`Positive family history of pulmonary fibrosis`[`Positive family history of pulmonary fibrosis`=='Y']),
+                                            `Positive family history of pulmonary fibrosis percentage` = `Positive family history of pulmonary fibrosis count`/length(`Positive family history of pulmonary fibrosis`),
+                                       
+                                            `Smoker count` = length(`Smoking status`[`Smoking status` == 1]),
+                                            `Ex-smoker count` = length(`Smoking status`[`Smoking status` == 2]),
+                                            `Non-smoker count` = length(`Smoking status`[`Smoking status` == 0]),
+                                       
+                                            `Smoker percentage` = `Smoker count` / length(`Smoking status`),
+                                            `Ex-smoker percentage` = `Ex-smoker count` / length(`Smoking status`),
+                                            `Non-smoker percentage` = `Non-smoker count` / length(`Smoking status`),
+
+                                            `Post-bronchodilator FVC mean` = mean(`Post-bronchodilator FVC`,na.rm = T),
+                                            `Post-bronchodilator FVC sd` = sd(`Post-bronchodilator FVC`,na.rm = T),
+                                            
+                                            `DLCO % predicted mean` = mean(`DLCO % predicted`,na.rm = T),
+                                            `DLCO % predicted sd` = sd(`DLCO % predicted`,na.rm = T),
+                                            
+                                            `Usual interstitial pneumonia count` = length(`Usual interstitial pneumonia`[`Usual interstitial pneumonia` == 1]),
+                                            `Usual interstitial pneumonia percentage` = `Usual interstitial pneumonia count` / length(`Usual interstitial pneumonia`),
+                                            
+                                            `Probable UIP count` = length(`Probable UIP`[`Probable UIP` == 1]),
+                                            `Probable UIP percentage` = `Probable UIP count` / length(`Probable UIP`),
+                                            
+                                            `Indeterminate UIP count` = length(`Indeterminate UIP`[`Indeterminate UIP` == 1]),
+                                            `Indeterminate UIP percentage` = `Indeterminate UIP count` / length(`Indeterminate UIP`),
+                                      
+                                            `Open lung count` = length(`Open lung`[`Open lung` == 'Yes']),
+                                            `Open lung percentage` = `Open lung count` / length(`Open lung`),
+                                      
+                                            `Distance (m) mean` = mean(`Distance (m)`,na.rm = T),
+                                            `Distance (m) sd` = sd(`Distance (m)`,na.rm = T),
+                                      
+                                            `Oxygen desaturation (delta resting-nadir) mean` =  mean(`Oxygen desaturation (rest)`-`Oxygen desaturation (effort)`,na.rm = T),
+                                            `Oxygen desaturation (delta resting-nadir) sd` =  sd(`Oxygen desaturation (rest)` - `Oxygen desaturation (effort)`,na.rm = T),
+                                      
+                                            `Antifibrotic count` = length(Antifibrotic[Antifibrotic==1]),
+                                            `Antifibrotic percentage` = `Antifibrotic count`/ length(Antifibrotic),
+                                      
+                                            `Supplemental oxygen count` = length(`Supplementary oxygen`[`Supplementary oxygen`=='1']),
+                                            `Supplemental oxygen percentage` = `Supplemental oxygen count` / length(`Supplementary oxygen`)
+)
+
+
+placeholder = c('','','','')
+
+#summary stats as a formated dataframe
+table = data.frame(`Genotype MUC5B` = paste0(summary_stats$Genotype,' (n = ',summary_stats$`Genotype counts`,')'),
+  `Age (years)` = paste0(round(summary_stats$Age_mean,1),' +/- ',round(summary_stats$Age_sd),1),
+                   `Ethnicity (% White)` = paste0(round(summary_stats$Ethnicity,1),' % '),
+                   `Positive family history of pulmonary fibrosis` = paste0(round(summary_stats$`Positive family history of pulmonary fibrosis count`), '(',round(summary_stats$`Positive family history of pulmonary fibrosis count`,1),' %)'),
+                   `Smoking status` = placeholder,
+                   Smoker = paste0(round(summary_stats$`Smoker count`),' (',round(summary_stats$`Smoker percentage`,1),' %)'),
+                   `Ex-Smoker` = paste0(round(summary_stats$`Ex-smoker count`),' (',round(summary_stats$`Ex-smoker percentage`,1),' %)'),
+                   `Non-Smoker` = paste0(round(summary_stats$`Non-smoker count`),' (',round(summary_stats$`Non-smoker percentage`,1),' %)'),
+                   `Lung function` = placeholder,
+                   `Post-bronchodilator FVC` = paste0(round(summary_stats$`Post-bronchodilator FVC mean`,1),' +/- ',round(summary_stats$`Post-bronchodilator FVC sd`,1)),
+                   `DLCO % predicted` = paste0(round(summary_stats$`DLCO % predicted mean`,1),' +/- ',round(summary_stats$`DLCO % predicted sd`,1), ' %'),
+                    `Chest CT patterns` = placeholder,
+                   `Usual interstitial pneumonia` = paste0(round(summary_stats$`Usual interstitial pneumonia count`),' (',round(summary_stats$`Usual interstitial pneumonia percentage`,1),' %)'),
+                   `Probable UIP` = paste0(round(summary_stats$`Probable UIP count`),' (',round(summary_stats$`Probable UIP percentage`,1),' %)'),
+                   `Indeterminate UIP` = paste0(round(summary_stats$`Indeterminate UIP count`),' (',round(summary_stats$`Indeterminate UIP percentage`,1),' %)'),
+                                                                            
+                    `Biopsies` = placeholder,                                                        
+                    `Open lung` = paste0(round(summary_stats$`Open lung count`),' (',round(summary_stats$`Open lung percentage`,1),' %)'),  
+                    `6-minute walk test` = placeholder,    
+                    `Distance (m)` = paste0(round(summary_stats$`Distance (m) mean`,1),' +/- ',round(summary_stats$`Distance (m) sd`,1)),
+                    `Oxygen desaturation (delta resting - nadir)` = paste0(round(summary_stats$`Oxygen desaturation (delta resting-nadir) mean`,1),' +/- ',round(summary_stats$`Oxygen desaturation (delta resting-nadir) sd`,1)),
+                    `Therapy` = placeholder, 
+                    `Antifibrotic` = paste0(round(summary_stats$`Antifibrotic count`),' (',round(summary_stats$`Antifibrotic percentage`,1),' %)'),
+                    `Supplemental oxygen` = paste0(round(summary_stats$`Supplemental oxygen count`),' (',round(summary_stats$`Supplemental oxygen percentage`,1),' %)'),
+                    check.names = F
+)
+
+                  
+write.table(t(table),file.path(params$outputpath,'table_MUC5B.csv'),col.names = F, sep = ',')
+            
+```
+
+
+
+
+
+
+
+```{r done}
+print('done')
+```
