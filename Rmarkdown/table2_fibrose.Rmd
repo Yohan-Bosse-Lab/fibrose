@@ -10,27 +10,18 @@ params:
   outputpath: 'C:/Users/renseb01/Documents/fibrose/results' 
 ---
 
-```{r toto}
-x = 1:10
-print(x)
-
-plot(x)
-
-```
-
-
 
 ```{r setup, include=FALSE}
 library(readxl)
 library(dplyr)
+library(genetics)
 knitr::opts_knit$set(root.dir = params$datapath)
 ```
 
-## R Markdown
-  * toto
-
+## set up table from a large excel file
 ```{r summary_stats}
 resume = read_xlsx(file.path(params$datapath,'Données_clinique_FPI_ng_13jul2023.xlsx'),sheet = 'Données cliniques 2023-10-17',skip =4)
+resume = resume[resume$Genotype!='En cours',]
 resume$`Positive family history of pulmonary fibrosis`[is.na(resume$`Positive family history of pulmonary fibrosis`)] = 'N'
 resume$`Supplementary oxygen`[is.na(resume$`Supplementary oxygen`)] = '0'
 resume$`Usual interstitial pneumonia`[is.na(resume$`Usual interstitial pneumonia`)] = 0
@@ -38,6 +29,7 @@ resume$`Probable UIP`[is.na(resume$`Probable UIP`)] = 0
 resume$`Indeterminate UIP`[is.na(resume$`Indeterminate UIP`)] = 0
 resume$`Open lung`[is.na(resume$`Open lung`)] = 'Non'
 resume$Antifibrotic[is.na(resume$Antifibrotic)] = 0
+resume$`Oxygen desaturation (rest-effort)` = resume$`Oxygen desaturation (rest)` - resume$`Oxygen desaturation (effort)`
 
 #all summary stats as a large tibble
 summary_stats = resume %>% group_by(Genotype) %>% summarise(
@@ -86,9 +78,52 @@ summary_stats = resume %>% group_by(Genotype) %>% summarise(
                                             `Supplemental oxygen count` = length(`Supplementary oxygen`[`Supplementary oxygen`=='1']),
                                             `Supplemental oxygen percentage` = `Supplemental oxygen count` / length(`Supplementary oxygen`)
 )
+```
+
+## some statististical tests
+```{r stats}
+#statistical tests chisq-tests
+chisq_tests = data.frame(label = c('Positive family history of pulmonary fibrosis count',
+                                             'Smoker count',
+                                             'Ex-smoker count',
+                                             'Non-smoker count',
+                                             'Usual interstitial pneumonia count',
+                                             'Probable UIP count',
+                                             'Indeterminate UIP count',
+                                             'Open lung count',
+                                             'Antifibrotic count',
+                                             'Supplemental oxygen count'),
+                         pvalues = 1)
+
+for(t in seq_along(chisq_tests[,1])) {
+  data = data.frame(x = summary_stats[,colnames(summary_stats) %in% chisq_tests$label[t]],
+                    p = summary_stats$`Genotype counts`/sum(summary_stats$`Genotype counts`))
+  if(sum(data[,1])>0) {chisq_tests$pvalues[t] = signif(chisq.test(data[,1],p = data$p)$p.value,2)}
+}
 
 
-placeholder = c('','','','')
+#statistical anovas 
+anova_tests = data.frame(label  = c('Age','Ethnie','Post-bronchodilator FVC','DLCO % predicted','Distance (m)','Oxygen desaturation (rest-effort)'),
+                         finallabels = c('Age (years)','Ethnicity (% White)','Post-bronchodilator FVC','DLCO % predicted','Distance (m)','Oxygen desaturation (delta resting - nadir)'),
+                         pvalues = 1)
+
+
+for(t in seq_along(anova_tests[,1])) {
+
+  data = data.frame(y = resume[,colnames(resume) %in% c(anova_tests$label[t])],
+                    Genotype = resume$Genotype)
+  colnames(data)[colnames(data)!='Genotype'] = 'y'
+  anova_results = anova(lm(data$y~data$Genotype))
+  anova_pvalue = anova_results$`Pr(>F)`[1]
+  
+  anova_tests$pvalues[t] = signif(anova_pvalue, 2)
+  }
+```
+
+
+## prepare the final table
+```{r final table}
+placeholder = c('','','')
 
 #summary stats as a formated dataframe
 table = data.frame(`Genotype MUC5B` = paste0(summary_stats$Genotype,' (n = ',summary_stats$`Genotype counts`,')'),
@@ -97,8 +132,8 @@ table = data.frame(`Genotype MUC5B` = paste0(summary_stats$Genotype,' (n = ',sum
                    `Positive family history of pulmonary fibrosis` = paste0(round(summary_stats$`Positive family history of pulmonary fibrosis count`), '(',round(summary_stats$`Positive family history of pulmonary fibrosis count`,1),' %)'),
                    `Smoking status` = placeholder,
                    Smoker = paste0(round(summary_stats$`Smoker count`),' (',round(summary_stats$`Smoker percentage`,1),' %)'),
-                   `Ex-Smoker` = paste0(round(summary_stats$`Ex-smoker count`),' (',round(summary_stats$`Ex-smoker percentage`,1),' %)'),
-                   `Non-Smoker` = paste0(round(summary_stats$`Non-smoker count`),' (',round(summary_stats$`Non-smoker percentage`,1),' %)'),
+                   `Ex-smoker` = paste0(round(summary_stats$`Ex-smoker count`),' (',round(summary_stats$`Ex-smoker percentage`,1),' %)'),
+                   `Non-smoker` = paste0(round(summary_stats$`Non-smoker count`),' (',round(summary_stats$`Non-smoker percentage`,1),' %)'),
                    `Lung function` = placeholder,
                    `Post-bronchodilator FVC` = paste0(round(summary_stats$`Post-bronchodilator FVC mean`,1),' +/- ',round(summary_stats$`Post-bronchodilator FVC sd`,1)),
                    `DLCO % predicted` = paste0(round(summary_stats$`DLCO % predicted mean`,1),' +/- ',round(summary_stats$`DLCO % predicted sd`,1), ' %'),
@@ -118,14 +153,20 @@ table = data.frame(`Genotype MUC5B` = paste0(summary_stats$Genotype,' (n = ',sum
                     check.names = F
 )
 
-                  
-write.table(t(table),file.path(params$outputpath,'table_MUC5B.csv'),col.names = F, sep = ',')
+#add pvalues and finalise the table 
+table = as.data.frame(t(table))
+table$pvalues = ''
+table$pvalues[rownames(table) %in% gsub(' count','',chisq_tests$label)] = chisq_tests$pvalues
+table$pvalues[rownames(table) %in% anova_tests$finallabels] = anova_tests$pvalues
+
+#HWE test
+genotypes = genotype(paste0(sapply(strsplit(resume$Genotype,split=''),'[',1),'/',sapply(strsplit(resume$Genotype,split=''),'[',2)))
+table$pvalues[1] = signif(HWE.exact(genotypes)$p.value,2)
+
+
+write.table(table,file.path(params$outputpath,'table_MUC5B.csv'),col.names = F, sep = ',')
             
 ```
-
-
-
-
 
 
 
