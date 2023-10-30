@@ -19,9 +19,8 @@ knitr::opts_knit$set(root.dir = params$datapath)
 ```
 
 ## set up table from a large excel file
-```{r summary_stats}
+```{r set up}
 resume = read_xlsx(file.path(params$datapath,'Données_clinique_FPI_ng_13jul2023.xlsx'),sheet = 'Données cliniques 2023-10-17',skip =4)
-resume = resume[resume$Genotype!='En cours',]
 resume$`Positive family history of pulmonary fibrosis`[is.na(resume$`Positive family history of pulmonary fibrosis`)] = 'N'
 resume$`Supplementary oxygen`[is.na(resume$`Supplementary oxygen`)] = '0'
 resume$`Usual interstitial pneumonia`[is.na(resume$`Usual interstitial pneumonia`)] = 0
@@ -31,22 +30,29 @@ resume$`Open lung`[is.na(resume$`Open lung`)] = 'Non'
 resume$Antifibrotic[is.na(resume$Antifibrotic)] = 0
 resume$`Oxygen desaturation (rest-effort)` = resume$`Oxygen desaturation (rest)` - resume$`Oxygen desaturation (effort)`
 
-#all summary stats as a large tibble
-summary_stats = resume %>% group_by(Genotype) %>% summarise(
+#combine the GT with TTs
+#resume$Genotype[resume$Genotype=='TT'] = 'GT'
+```
+
+
+
+#all summary stats as a large tibble GROUPED BY GENOTYPES
+```{r summary stats}
+summary_stats = resume %>% group_by(Sex) %>% summarise(
                                             `Genotype counts` = length(Genotype),
                                             Age_mean = mean(Age),
                                             Age_sd = sd(Age),
-                                            Ethnicity = sum(Ethnie[Ethnie==1])/length(Ethnie),
+                                            Ethnicity = sum(Ethnie[Ethnie==1])/length(Ethnie)*100,
                                             `Positive family history of pulmonary fibrosis count` = length(`Positive family history of pulmonary fibrosis`[`Positive family history of pulmonary fibrosis`=='Y']),
-                                            `Positive family history of pulmonary fibrosis percentage` = `Positive family history of pulmonary fibrosis count`/length(`Positive family history of pulmonary fibrosis`),
+                                            `Positive family history of pulmonary fibrosis percentage` = `Positive family history of pulmonary fibrosis count`/length(Genotype)*100,
                                        
                                             `Smoker count` = length(`Smoking status`[`Smoking status` == 1]),
                                             `Ex-smoker count` = length(`Smoking status`[`Smoking status` == 2]),
                                             `Non-smoker count` = length(`Smoking status`[`Smoking status` == 0]),
                                        
-                                            `Smoker percentage` = `Smoker count` / length(`Smoking status`),
-                                            `Ex-smoker percentage` = `Ex-smoker count` / length(`Smoking status`),
-                                            `Non-smoker percentage` = `Non-smoker count` / length(`Smoking status`),
+                                            `Smoker percentage` = `Smoker count` / length(`Smoking status`)*100,
+                                            `Ex-smoker percentage` = `Ex-smoker count` / length(`Smoking status`)*100,
+                                            `Non-smoker percentage` = `Non-smoker count` / length(`Smoking status`)*100,
 
                                             `Post-bronchodilator FVC mean` = mean(`Post-bronchodilator FVC`,na.rm = T),
                                             `Post-bronchodilator FVC sd` = sd(`Post-bronchodilator FVC`,na.rm = T),
@@ -55,16 +61,16 @@ summary_stats = resume %>% group_by(Genotype) %>% summarise(
                                             `DLCO % predicted sd` = sd(`DLCO % predicted`,na.rm = T),
                                             
                                             `Usual interstitial pneumonia count` = length(`Usual interstitial pneumonia`[`Usual interstitial pneumonia` == 1]),
-                                            `Usual interstitial pneumonia percentage` = `Usual interstitial pneumonia count` / length(`Usual interstitial pneumonia`),
+                                            `Usual interstitial pneumonia percentage` = `Usual interstitial pneumonia count` / length(`Usual interstitial pneumonia`)*100,
                                             
                                             `Probable UIP count` = length(`Probable UIP`[`Probable UIP` == 1]),
-                                            `Probable UIP percentage` = `Probable UIP count` / length(`Probable UIP`),
+                                            `Probable UIP percentage` = `Probable UIP count` / length(`Probable UIP`)*100,
                                             
                                             `Indeterminate UIP count` = length(`Indeterminate UIP`[`Indeterminate UIP` == 1]),
-                                            `Indeterminate UIP percentage` = `Indeterminate UIP count` / length(`Indeterminate UIP`),
+                                            `Indeterminate UIP percentage` = `Indeterminate UIP count` / length(`Indeterminate UIP`)*100,
                                       
-                                            `Open lung count` = length(`Open lung`[`Open lung` == 'Yes']),
-                                            `Open lung percentage` = `Open lung count` / length(`Open lung`),
+                                            `Open lung count` = length(`Open lung`[`Open lung` == 'Oui']),
+                                            `Open lung percentage` = `Open lung count` / length(`Open lung`)*100,
                                       
                                             `Distance (m) mean` = mean(`Distance (m)`,na.rm = T),
                                             `Distance (m) sd` = sd(`Distance (m)`,na.rm = T),
@@ -73,14 +79,14 @@ summary_stats = resume %>% group_by(Genotype) %>% summarise(
                                             `Oxygen desaturation (delta resting-nadir) sd` =  sd(`Oxygen desaturation (rest)` - `Oxygen desaturation (effort)`,na.rm = T),
                                       
                                             `Antifibrotic count` = length(Antifibrotic[Antifibrotic==1]),
-                                            `Antifibrotic percentage` = `Antifibrotic count`/ length(Antifibrotic),
+                                            `Antifibrotic percentage` = `Antifibrotic count`/ length(Antifibrotic)*100,
                                       
                                             `Supplemental oxygen count` = length(`Supplementary oxygen`[`Supplementary oxygen`=='1']),
-                                            `Supplemental oxygen percentage` = `Supplemental oxygen count` / length(`Supplementary oxygen`)
+                                            `Supplemental oxygen percentage` = `Supplemental oxygen count` / length(`Supplementary oxygen`)*100
 )
 ```
 
-## some statististical tests
+## statististical tests FOR GENOTYPES
 ```{r stats}
 #statistical tests chisq-tests
 chisq_tests = data.frame(label = c('Positive family history of pulmonary fibrosis count',
@@ -121,15 +127,15 @@ for(t in seq_along(anova_tests[,1])) {
 ```
 
 
-## prepare the final table
+## prepare the final table BY GENOTYPES
 ```{r final table}
-placeholder = c('','','')
+placeholder = ifelse(nrow(summary_stats) == 2,c('',''),c('','',''))
 
 #summary stats as a formated dataframe
 table = data.frame(`Genotype MUC5B` = paste0(summary_stats$Genotype,' (n = ',summary_stats$`Genotype counts`,')'),
-  `Age (years)` = paste0(round(summary_stats$Age_mean,1),' +/- ',round(summary_stats$Age_sd),1),
+  `Age (years)` = paste0(round(summary_stats$Age_mean,1),' +/- ',round(summary_stats$Age_sd,1)),
                    `Ethnicity (% White)` = paste0(round(summary_stats$Ethnicity,1),' % '),
-                   `Positive family history of pulmonary fibrosis` = paste0(round(summary_stats$`Positive family history of pulmonary fibrosis count`), '(',round(summary_stats$`Positive family history of pulmonary fibrosis count`,1),' %)'),
+                   `Positive family history of pulmonary fibrosis` = paste0(round(summary_stats$`Positive family history of pulmonary fibrosis count`), ' (',round(summary_stats$`Positive family history of pulmonary fibrosis percentage`,1),' %)'),
                    `Smoking status` = placeholder,
                    Smoker = paste0(round(summary_stats$`Smoker count`),' (',round(summary_stats$`Smoker percentage`,1),' %)'),
                    `Ex-smoker` = paste0(round(summary_stats$`Ex-smoker count`),' (',round(summary_stats$`Ex-smoker percentage`,1),' %)'),
@@ -159,17 +165,167 @@ table$pvalues = ''
 table$pvalues[rownames(table) %in% gsub(' count','',chisq_tests$label)] = chisq_tests$pvalues
 table$pvalues[rownames(table) %in% anova_tests$finallabels] = anova_tests$pvalues
 
-#HWE test
-genotypes = genotype(paste0(sapply(strsplit(resume$Genotype,split=''),'[',1),'/',sapply(strsplit(resume$Genotype,split=''),'[',2)))
-table$pvalues[1] = signif(HWE.exact(genotypes)$p.value,2)
+
+if(nrow(summary_stats)==2){write.table(table,file.path(params$outputpath,'table_MUC5B_combinedGenotypes.csv'),col.names = F, sep = ',')}
+if(nrow(summary_stats)==3){
+  #HWE test
+  genotypes = genotype(paste0(sapply(strsplit(resume$Genotype,split=''),'[',1),'/',sapply(strsplit(resume$Genotype,split=''),'[',2)))
+  table$pvalues[1] = signif(HWE.exact(genotypes)$p.value,2)
+  write.table(table,file.path(params$outputpath,'table_MUC5B.csv'),col.names = F, sep = ',')
+}
 
 
-write.table(table,file.path(params$outputpath,'table_MUC5B.csv'),col.names = F, sep = ',')
-            
 ```
-
 
 
 ```{r done}
 print('done')
 ```
+
+
+
+
+#MODIFIED SCRIPT FOR TABLE 2. (GROUP PATIENTS BY SEX)
+```{r summary stats}
+summary_stats = resume %>% group_by(Sex) %>% summarise(
+                                            Characteristics = length(Sex),
+                                            Age_mean = mean(Age),
+                                            Age_sd = sd(Age),
+                                            Ethnicity = sum(Ethnie[Ethnie==1])/length(Ethnie)*100,
+                                            `Positive family history of pulmonary fibrosis count` = length(`Positive family history of pulmonary fibrosis`[`Positive family history of pulmonary fibrosis`=='Y']),
+                                            `Positive family history of pulmonary fibrosis percentage` = `Positive family history of pulmonary fibrosis count`/length(Genotype)*100,
+                                       
+                                            `Smoker count` = length(`Smoking status`[`Smoking status` == 1]),
+                                            `Ex-smoker count` = length(`Smoking status`[`Smoking status` == 2]),
+                                            `Non-smoker count` = length(`Smoking status`[`Smoking status` == 0]),
+                                       
+                                            `Smoker percentage` = `Smoker count` / length(`Smoking status`)*100,
+                                            `Ex-smoker percentage` = `Ex-smoker count` / length(`Smoking status`)*100,
+                                            `Non-smoker percentage` = `Non-smoker count` / length(`Smoking status`)*100,
+
+                                            `Post-bronchodilator FVC mean` = mean(`Post-bronchodilator FVC`,na.rm = T),
+                                            `Post-bronchodilator FVC sd` = sd(`Post-bronchodilator FVC`,na.rm = T),
+                                            
+                                            `DLCO % predicted mean` = mean(`DLCO % predicted`,na.rm = T),
+                                            `DLCO % predicted sd` = sd(`DLCO % predicted`,na.rm = T),
+                                            
+                                            `Usual interstitial pneumonia count` = length(`Usual interstitial pneumonia`[`Usual interstitial pneumonia` == 1]),
+                                            `Usual interstitial pneumonia percentage` = `Usual interstitial pneumonia count` / length(`Usual interstitial pneumonia`)*100,
+                                            
+                                            `Probable UIP count` = length(`Probable UIP`[`Probable UIP` == 1]),
+                                            `Probable UIP percentage` = `Probable UIP count` / length(`Probable UIP`)*100,
+                                            
+                                            `Indeterminate UIP count` = length(`Indeterminate UIP`[`Indeterminate UIP` == 1]),
+                                            `Indeterminate UIP percentage` = `Indeterminate UIP count` / length(`Indeterminate UIP`)*100,
+                                      
+                                            `Open lung count` = length(`Open lung`[`Open lung` == 'Oui']),
+                                            `Open lung percentage` = `Open lung count` / length(`Open lung`)*100,
+                                      
+                                            `Distance (m) mean` = mean(`Distance (m)`,na.rm = T),
+                                            `Distance (m) sd` = sd(`Distance (m)`,na.rm = T),
+                                      
+                                            `Oxygen desaturation (delta resting-nadir) mean` =  mean(`Oxygen desaturation (rest)`-`Oxygen desaturation (effort)`,na.rm = T),
+                                            `Oxygen desaturation (delta resting-nadir) sd` =  sd(`Oxygen desaturation (rest)` - `Oxygen desaturation (effort)`,na.rm = T),
+                                      
+                                            `Antifibrotic count` = length(Antifibrotic[Antifibrotic==1]),
+                                            `Antifibrotic percentage` = `Antifibrotic count`/ length(Antifibrotic)*100,
+                                      
+                                            `Supplemental oxygen count` = length(`Supplementary oxygen`[`Supplementary oxygen`=='1']),
+                                            `Supplemental oxygen percentage` = `Supplemental oxygen count` / length(`Supplementary oxygen`)*100
+)
+
+#
+summary_stats_NOGROUPS = resume %>% summarise(
+                                            Characteristics = length(Sex),
+                                            Age_mean = mean(Age),
+                                            Age_sd = sd(Age),
+                                            Ethnicity = sum(Ethnie[Ethnie==1])/length(Ethnie)*100,
+                                            `Positive family history of pulmonary fibrosis count` = length(`Positive family history of pulmonary fibrosis`[`Positive family history of pulmonary fibrosis`=='Y']),
+                                            `Positive family history of pulmonary fibrosis percentage` = `Positive family history of pulmonary fibrosis count`/length(Genotype)*100,
+                                       
+                                            `Smoker count` = length(`Smoking status`[`Smoking status` == 1]),
+                                            `Ex-smoker count` = length(`Smoking status`[`Smoking status` == 2]),
+                                            `Non-smoker count` = length(`Smoking status`[`Smoking status` == 0]),
+                                       
+                                            `Smoker percentage` = `Smoker count` / length(`Smoking status`)*100,
+                                            `Ex-smoker percentage` = `Ex-smoker count` / length(`Smoking status`)*100,
+                                            `Non-smoker percentage` = `Non-smoker count` / length(`Smoking status`)*100,
+
+                                            `Post-bronchodilator FVC mean` = mean(`Post-bronchodilator FVC`,na.rm = T),
+                                            `Post-bronchodilator FVC sd` = sd(`Post-bronchodilator FVC`,na.rm = T),
+                                            
+                                            `DLCO % predicted mean` = mean(`DLCO % predicted`,na.rm = T),
+                                            `DLCO % predicted sd` = sd(`DLCO % predicted`,na.rm = T),
+                                            
+                                            `Usual interstitial pneumonia count` = length(`Usual interstitial pneumonia`[`Usual interstitial pneumonia` == 1]),
+                                            `Usual interstitial pneumonia percentage` = `Usual interstitial pneumonia count` / length(`Usual interstitial pneumonia`)*100,
+                                            
+                                            `Probable UIP count` = length(`Probable UIP`[`Probable UIP` == 1]),
+                                            `Probable UIP percentage` = `Probable UIP count` / length(`Probable UIP`)*100,
+                                            
+                                            `Indeterminate UIP count` = length(`Indeterminate UIP`[`Indeterminate UIP` == 1]),
+                                            `Indeterminate UIP percentage` = `Indeterminate UIP count` / length(`Indeterminate UIP`)*100,
+                                      
+                                            `Open lung count` = length(`Open lung`[`Open lung` == 'Oui']),
+                                            `Open lung percentage` = `Open lung count` / length(`Open lung`)*100,
+                                      
+                                            `Distance (m) mean` = mean(`Distance (m)`,na.rm = T),
+                                            `Distance (m) sd` = sd(`Distance (m)`,na.rm = T),
+                                      
+                                            `Oxygen desaturation (delta resting-nadir) mean` =  mean(`Oxygen desaturation (rest)`-`Oxygen desaturation (effort)`,na.rm = T),
+                                            `Oxygen desaturation (delta resting-nadir) sd` =  sd(`Oxygen desaturation (rest)` - `Oxygen desaturation (effort)`,na.rm = T),
+                                      
+                                            `Antifibrotic count` = length(Antifibrotic[Antifibrotic==1]),
+                                            `Antifibrotic percentage` = `Antifibrotic count`/ length(Antifibrotic)*100,
+                                      
+                                            `Supplemental oxygen count` = length(`Supplementary oxygen`[`Supplementary oxygen`=='1']),
+                                            `Supplemental oxygen percentage` = `Supplemental oxygen count` / length(`Supplementary oxygen`)*100
+)
+
+
+summary_stats[3,] = c(3,summary_stats_NOGROUPS)
+summary_stats = summary_stats[c(3,1,2),]
+
+summary_stats[,1] = c("All patients","Men","Women")
+
+```
+
+
+## prepare the final table BY SEX
+```{r final table}
+placeholder = c('','','')
+
+#summary stats as a formated dataframe
+table = data.frame(`Characteristics` = paste0(summary_stats$Sex,' (n = ',summary_stats$Characteristics,')'),
+  `Age (years)` = paste0(round(summary_stats$Age_mean,1),' +/- ',round(summary_stats$Age_sd,1)),
+                   `Ethnicity (% White)` = paste0(round(summary_stats$Ethnicity,1),' % '),
+                   `Positive family history of pulmonary fibrosis` = paste0(round(summary_stats$`Positive family history of pulmonary fibrosis count`), ' (',round(summary_stats$`Positive family history of pulmonary fibrosis percentage`,1),' %)'),
+                   `Smoking status` = placeholder,
+                   Smoker = paste0(round(summary_stats$`Smoker count`),' (',round(summary_stats$`Smoker percentage`,1),' %)'),
+                   `Ex-smoker` = paste0(round(summary_stats$`Ex-smoker count`),' (',round(summary_stats$`Ex-smoker percentage`,1),' %)'),
+                   `Non-smoker` = paste0(round(summary_stats$`Non-smoker count`),' (',round(summary_stats$`Non-smoker percentage`,1),' %)'),
+                   `Lung function` = placeholder,
+                   `Post-bronchodilator FVC` = paste0(round(summary_stats$`Post-bronchodilator FVC mean`,1),' +/- ',round(summary_stats$`Post-bronchodilator FVC sd`,1)),
+                   `DLCO % predicted` = paste0(round(summary_stats$`DLCO % predicted mean`,1),' +/- ',round(summary_stats$`DLCO % predicted sd`,1), ' %'),
+                    `Chest CT patterns` = placeholder,
+                   `Usual interstitial pneumonia` = paste0(round(summary_stats$`Usual interstitial pneumonia count`),' (',round(summary_stats$`Usual interstitial pneumonia percentage`,1),' %)'),
+                   `Probable UIP` = paste0(round(summary_stats$`Probable UIP count`),' (',round(summary_stats$`Probable UIP percentage`,1),' %)'),
+                   `Indeterminate UIP` = paste0(round(summary_stats$`Indeterminate UIP count`),' (',round(summary_stats$`Indeterminate UIP percentage`,1),' %)'),
+                                                                            
+                    `Biopsies` = placeholder,                                                        
+                    `Open lung` = paste0(round(summary_stats$`Open lung count`),' (',round(summary_stats$`Open lung percentage`,1),' %)'),  
+                    `6-minute walk test` = placeholder,    
+                    `Distance (m)` = paste0(round(summary_stats$`Distance (m) mean`,1),' +/- ',round(summary_stats$`Distance (m) sd`,1)),
+                    `Oxygen desaturation (delta resting - nadir)` = paste0(round(summary_stats$`Oxygen desaturation (delta resting-nadir) mean`,1),' +/- ',round(summary_stats$`Oxygen desaturation (delta resting-nadir) sd`,1)),
+                    `Therapy` = placeholder, 
+                    `Antifibrotic` = paste0(round(summary_stats$`Antifibrotic count`),' (',round(summary_stats$`Antifibrotic percentage`,1),' %)'),
+                    `Supplemental oxygen` = paste0(round(summary_stats$`Supplemental oxygen count`),' (',round(summary_stats$`Supplemental oxygen percentage`,1),' %)'),
+                    check.names = F
+)
+
+#add pvalues and finalise the table 
+table = as.data.frame(t(table))
+
+write.table(table,file.path(params$outputpath,'table2.csv'),col.names = F, sep = ',')
+```
+
