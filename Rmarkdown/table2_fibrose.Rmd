@@ -38,7 +38,7 @@ resume$`Oxygen desaturation (rest-effort)` = resume$`Oxygen desaturation (rest)`
 
 #all summary stats as a large tibble GROUPED BY GENOTYPES
 ```{r summary stats}
-summary_stats = resume %>% group_by(Sex) %>% summarise(
+summary_stats = resume %>% group_by(Genotype) %>% summarise(
                                             `Genotype counts` = length(Genotype),
                                             Age_mean = mean(Age),
                                             Age_sd = sd(Age),
@@ -56,6 +56,9 @@ summary_stats = resume %>% group_by(Sex) %>% summarise(
 
                                             `Post-bronchodilator FVC mean` = mean(`Post-bronchodilator FVC`,na.rm = T),
                                             `Post-bronchodilator FVC sd` = sd(`Post-bronchodilator FVC`,na.rm = T),
+                                            
+                                            `Bronchodilator count` = length(`Post-bronchodilator FVC`[!is.na(`Post-bronchodilator FVC`)]),
+                                            `Bronchodilator percentage` = `Bronchodilator count` / length(`Post-bronchodilator FVC`) * 100,
                                             
                                             `DLCO % predicted mean` = mean(`DLCO % predicted`,na.rm = T),
                                             `DLCO % predicted sd` = sd(`DLCO % predicted`,na.rm = T),
@@ -93,6 +96,7 @@ chisq_tests = data.frame(label = c('Positive family history of pulmonary fibrosi
                                              'Smoker count',
                                              'Ex-smoker count',
                                              'Non-smoker count',
+                                             'Bronchodilator count',
                                              'Usual interstitial pneumonia count',
                                              'Probable UIP count',
                                              'Indeterminate UIP count',
@@ -141,9 +145,10 @@ table = data.frame(`Genotype MUC5B` = paste0(summary_stats$Genotype,' (n = ',sum
                    `Ex-smoker` = paste0(round(summary_stats$`Ex-smoker count`),' (',round(summary_stats$`Ex-smoker percentage`,1),' %)'),
                    `Non-smoker` = paste0(round(summary_stats$`Non-smoker count`),' (',round(summary_stats$`Non-smoker percentage`,1),' %)'),
                    `Lung function` = placeholder,
+                   `Bronchodilator` = paste0(round(summary_stats$`Bronchodilator count`),' (',round(summary_stats$`Bronchodilator percentage`,1),' %)'),
                    `Post-bronchodilator FVC` = paste0(round(summary_stats$`Post-bronchodilator FVC mean`,1),' +/- ',round(summary_stats$`Post-bronchodilator FVC sd`,1)),
                    `DLCO % predicted` = paste0(round(summary_stats$`DLCO % predicted mean`,1),' +/- ',round(summary_stats$`DLCO % predicted sd`,1), ' %'),
-                    `Chest CT patterns` = placeholder,
+                   `Chest CT patterns` = placeholder,
                    `Usual interstitial pneumonia` = paste0(round(summary_stats$`Usual interstitial pneumonia count`),' (',round(summary_stats$`Usual interstitial pneumonia percentage`,1),' %)'),
                    `Probable UIP` = paste0(round(summary_stats$`Probable UIP count`),' (',round(summary_stats$`Probable UIP percentage`,1),' %)'),
                    `Indeterminate UIP` = paste0(round(summary_stats$`Indeterminate UIP count`),' (',round(summary_stats$`Indeterminate UIP percentage`,1),' %)'),
@@ -206,6 +211,9 @@ summary_stats = resume %>% group_by(Sex) %>% summarise(
                                             `Post-bronchodilator FVC mean` = mean(`Post-bronchodilator FVC`,na.rm = T),
                                             `Post-bronchodilator FVC sd` = sd(`Post-bronchodilator FVC`,na.rm = T),
                                             
+                                            `Bronchodilator count` = length(`Post-bronchodilator FVC`[!is.na(`Post-bronchodilator FVC`)]),
+                                            `Bronchodilator percentage` = `Bronchodilator count` / length(`Post-bronchodilator FVC`) * 100,
+                                            
                                             `DLCO % predicted mean` = mean(`DLCO % predicted`,na.rm = T),
                                             `DLCO % predicted sd` = sd(`DLCO % predicted`,na.rm = T),
                                             
@@ -253,6 +261,9 @@ summary_stats_NOGROUPS = resume %>% summarise(
 
                                             `Post-bronchodilator FVC mean` = mean(`Post-bronchodilator FVC`,na.rm = T),
                                             `Post-bronchodilator FVC sd` = sd(`Post-bronchodilator FVC`,na.rm = T),
+                                            
+                                            `Bronchodilator count` = length(`Post-bronchodilator FVC`[!is.na(`Post-bronchodilator FVC`)]),
+                                            `Bronchodilator percentage` = `Bronchodilator count` / length(`Post-bronchodilator FVC`) * 100,
                                             
                                             `DLCO % predicted mean` = mean(`DLCO % predicted`,na.rm = T),
                                             `DLCO % predicted sd` = sd(`DLCO % predicted`,na.rm = T),
@@ -305,6 +316,7 @@ table = data.frame(`Characteristics` = paste0(summary_stats$Sex,' (n = ',summary
                    `Ex-smoker` = paste0(round(summary_stats$`Ex-smoker count`),' (',round(summary_stats$`Ex-smoker percentage`,1),' %)'),
                    `Non-smoker` = paste0(round(summary_stats$`Non-smoker count`),' (',round(summary_stats$`Non-smoker percentage`,1),' %)'),
                    `Lung function` = placeholder,
+                   `Bronchodilator` = paste0(round(summary_stats$`Bronchodilator count`),' (',round(summary_stats$`Bronchodilator percentage`,1),' %)'),
                    `Post-bronchodilator FVC` = paste0(round(summary_stats$`Post-bronchodilator FVC mean`,1),' +/- ',round(summary_stats$`Post-bronchodilator FVC sd`,1)),
                    `DLCO % predicted` = paste0(round(summary_stats$`DLCO % predicted mean`,1),' +/- ',round(summary_stats$`DLCO % predicted sd`,1), ' %'),
                     `Chest CT patterns` = placeholder,
